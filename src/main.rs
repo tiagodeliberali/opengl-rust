@@ -80,8 +80,24 @@ fn main() {
         let mut target = display.draw();
         target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
 
-        let uniforms = uniform! {
+        let mut uniforms = uniform! {
             modelToCameraMatrix: MatrixOperation::translation(1.5, 1.5, -3.0),
+            cameraToClipMatrix: perspective_matrix
+        };
+
+        target
+            .draw(
+                &vertex_buffer,
+                &indices,
+                &program,
+                &uniforms,
+                &draw_parameters,
+            )
+            .unwrap();
+
+
+        uniforms = uniform! {
+            modelToCameraMatrix: MatrixOperation::translation(-2.0, -2.0, -3.0) * MatrixOperation::scale(0.5, 0.5, 0.5),
             cameraToClipMatrix: perspective_matrix
         };
 
