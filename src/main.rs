@@ -1,6 +1,12 @@
 #[macro_use]
 extern crate glium;
 
+mod primitives;
+mod shaders;
+
+use primitives::Primitive;
+use shaders::{FragmentShader, VertexShader};
+
 fn main() {
     #[allow(unused_imports)]
     use glium::{glutin, Surface};
@@ -10,131 +16,7 @@ fn main() {
     let cb = glutin::ContextBuilder::new();
     let display = glium::Display::new(wb, cb, &event_loop).unwrap();
 
-    #[derive(Copy, Clone)]
-    struct Vertex {
-        position: [f32; 3],
-        color: [f32; 4],
-    }
-
-    implement_vertex!(Vertex, position, color);
-
-    let shape = vec![
-        Vertex {
-            position: [0.5, 0.5, 0.5],
-            color: [1.0, 0.0, 0.0, 1.0],
-        },
-        Vertex {
-            position: [0.5, -0.5, 0.5],
-            color: [1.0, 0.0, 0.0, 1.0],
-        },
-        Vertex {
-            position: [-0.5, 0.5, 0.5],
-            color: [1.0, 0.0, 0.0, 1.0],
-        },
-        Vertex {
-            position: [-0.5, -0.5, 0.5],
-            color: [1.0, 0.0, 0.0, 1.0],
-        },
-
-        Vertex {
-            position: [0.5, 0.5, -0.5],
-            color: [0.0, 1.0, 0.0, 1.0],
-        },
-        Vertex {
-            position: [0.5, -0.5, -0.5],
-            color: [0.0, 1.0, 0.0, 1.0],
-        },
-        Vertex {
-            position: [-0.5, 0.5, -0.5],
-            color: [0.0, 1.0, 0.0, 1.0],
-        },
-        Vertex {
-            position: [-0.5, -0.5, -0.5],
-            color: [0.0, 1.0, 0.0, 1.0],
-        },
-
-        Vertex {
-            position: [-0.5, 0.5, 0.5],
-            color: [0.0, 0.0, 1.0, 1.0],
-        },
-        Vertex {
-            position: [-0.5, 0.5, -0.5],
-            color: [0.0, 0.0, 1.0, 1.0],
-        },
-        Vertex {
-            position: [-0.5, -0.5, 0.5],
-            color: [0.0, 0.0, 1.0, 1.0],
-        },
-        Vertex {
-            position: [-0.5, -0.5, -0.5],
-            color: [0.0, 0.0, 1.0, 1.0],
-        },
-
-        Vertex {
-            position: [0.5, 0.5, 0.5],
-            color: [0.0, 1.0, 1.0, 1.0],
-        },
-        Vertex {
-            position: [0.5, 0.5, -0.5],
-            color: [0.0, 1.0, 1.0, 1.0],
-        },
-        Vertex {
-            position: [0.5, -0.5, 0.5],
-            color: [0.0, 1.0, 1.0, 1.0],
-        },
-        Vertex {
-            position: [0.5, -0.5, -0.5],
-            color: [0.0, 1.0, 1.0, 1.0],
-        },
-
-        Vertex {
-            position: [0.5, 0.5, 0.5],
-            color: [1.0, 0.0, 1.0, 1.0],
-        },
-        Vertex {
-            position: [-0.5, 0.5, 0.5],
-            color: [1.0, 0.0, 1.0, 1.0],
-        },
-        Vertex {
-            position: [0.5, 0.5, -0.5],
-            color: [1.0, 0.0, 1.0, 1.0],
-        },
-        Vertex {
-            position: [-0.5, 0.5, -0.5],
-            color: [1.0, 0.0, 1.0, 1.0],
-        },
-
-        Vertex {
-            position: [0.5, -0.5, 0.5],
-            color: [1.0, 1.0, 0.0, 1.0],
-        },
-        Vertex {
-            position: [-0.5, -0.5, 0.5],
-            color: [1.0, 1.0, 0.0, 1.0],
-        },
-        Vertex {
-            position: [0.5, -0.5, -0.5],
-            color: [1.0, 1.0, 0.0, 1.0],
-        },
-        Vertex {
-            position: [-0.5, -0.5, -0.5],
-            color: [1.0, 1.0, 0.0, 1.0],
-        },
-    ];
-
-    let indices: [u16; 36] = [
-        0, 2, 1, 
-        1, 2, 3, 
-        4, 5, 6, 
-        5, 7, 6,
-        8, 9, 10,
-        9, 11, 10,
-        12, 14, 13, 
-        13, 14, 15,
-        16, 18, 17,
-        17, 18, 19,
-        20, 21, 22,
-        21, 23, 22];
+    let (shape, indices) = Primitive::cube();
 
     let vertex_buffer = glium::VertexBuffer::new(&display, &shape).unwrap();
     let indices = glium::IndexBuffer::new(
@@ -144,42 +26,13 @@ fn main() {
     )
     .unwrap();
 
-    let vertex_shader_src = r#"
-    #version 330
-
-    layout(location = 0) in vec3 position;
-    layout(location = 1) in vec4 color;
-    
-    smooth out vec4 theColor;
-    
-    uniform vec3 offset;
-    uniform mat4 perspectiveMatrix;
-    
-    void main()
-    {
-        vec4 cameraPos = vec4(position, 1.0) + vec4(offset.x, offset.y, offset.z, 0.0);
-    
-        gl_Position = perspectiveMatrix * cameraPos;
-        theColor = color;
-    } 
-    "#;
-
-    let fragment_shader_src = r#"
-        #version 330
-
-        smooth in vec4 theColor;
-        
-        out vec4 outputColor;
-        
-        void main()
-        {
-            outputColor = theColor;
-        }    
-    "#;
-
-    let program =
-        glium::Program::from_source(&display, vertex_shader_src, fragment_shader_src, None)
-            .unwrap();
+    let program = glium::Program::from_source(
+        &display,
+        &VertexShader::color_camera_clip(),
+        &FragmentShader::smooth_color(),
+        None,
+    )
+    .unwrap();
 
     event_loop.run(move |event, _, control_flow| {
         let next_frame_time =
@@ -207,11 +60,11 @@ fn main() {
 
 
         let frustum_scale: f32 = 1.0;
-        let z_near = 1.0_f32; 
+        let z_near = 1.0_f32;
         let z_far = 3.0_f32;
 
         let uniforms = uniform! {
-            offset: [-0.75_f32, -0.75_f32, -1.0_f32],
+            offset: [0.75_f32, 0.75_f32, -1.0_f32],
             perspectiveMatrix: [
                 [frustum_scale,     0.0,            0.0,                                    0.0],
                 [0.0,               frustum_scale,  0.0,                                    0.0],
