@@ -46,7 +46,7 @@ fn main() {
             write: true,
             ..Default::default()
         },
-        backface_culling: glium::draw_parameters::BackfaceCullingMode::CullClockwise,
+        // backface_culling: glium::draw_parameters::BackfaceCullingMode::CullClockwise,
         ..Default::default()
     };
 
@@ -64,7 +64,7 @@ fn main() {
                 }
                 glutin::event::WindowEvent::Resized(new_size) => {
                     let ratio = new_size.width as f32 / new_size.height as f32;
-                    perspective_matrix = MatrixOperation::perspective(ratio, 1.0, 1.0, 3.0);
+                    perspective_matrix = MatrixOperation::perspective(ratio, 1.0, 1.0, 30.0);
                     return;
                 }
                 _ => return,
@@ -80,27 +80,14 @@ fn main() {
         let mut target = display.draw();
         target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
 
-        let mut uniforms = uniform! {
-            cameraToClipMatrix: perspective_matrix,
-            modelToCameraMatrix: MatrixOperation::translation(0.0, 0.0, -1.0)
+        let uniforms = uniform! {
+            modelToCameraMatrix: MatrixOperation::translation(0.5, 0.5, -3.0),
+            cameraToClipMatrix: perspective_matrix
         };
 
-        println!("uniform: {:#?}", &perspective_matrix);
-        println!("uniform: {:#?}", &MatrixOperation::translation(0.0, 0.0, -1.0));
-        target
-            .draw(
-                &vertex_buffer,
-                &indices,
-                &program,
-                &uniforms,
-                &draw_parameters,
-            )
-            .unwrap();
+        println!("modelToCameraMatrix: {:#?}", MatrixOperation::translation(0.5, 0.5, -3.0));
+        println!("cameraToClipMatrix: {:#?}", perspective_matrix);
 
-        uniforms = uniform! {
-            cameraToClipMatrix: perspective_matrix,
-            modelToCameraMatrix: MatrixOperation::translation(-0.25, -0.25, 1.25)
-        };
         target
             .draw(
                 &vertex_buffer,
