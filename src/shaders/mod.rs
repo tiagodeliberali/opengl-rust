@@ -3,8 +3,8 @@ use std::fs::read_to_string;
 pub struct VertexShader {}
 
 impl VertexShader {
-    pub fn color_camera_clip() -> String {
-        read_to_string("src/shaders/color_camera_clip.vert").unwrap()
+    pub fn color_model_camera_clip() -> String {
+        read_to_string("src/shaders/color_model_camera_clip.vert").unwrap()
     }
 }
 

@@ -32,16 +32,13 @@ fn main() {
 
     let program = glium::Program::from_source(
         &display,
-        &VertexShader::color_camera_clip(),
+        &VertexShader::color_model_camera_clip(),
         &FragmentShader::smooth_color(),
         None,
     )
     .unwrap();
 
-    let mut uniforms = uniform! {
-        offset: [0.75_f32, 0.75_f32, -1.0_f32],
-        perspectiveMatrix: MatrixOperation::perspective(1.0, 1.0, 1.0, 3.0)
-    };
+    let mut perspective_matrix = MatrixOperation::perspective(1.0, 1.0, 1.0, 3.0);
 
     let draw_parameters = glium::DrawParameters {
         depth: glium::Depth {
@@ -64,13 +61,10 @@ fn main() {
                 glutin::event::WindowEvent::CloseRequested => {
                     *control_flow = glutin::event_loop::ControlFlow::Exit;
                     return;
-                },
+                }
                 glutin::event::WindowEvent::Resized(new_size) => {
                     let ratio = new_size.width as f32 / new_size.height as f32;
-                    uniforms = uniform! {
-                        offset: [0.75_f32, 0.75_f32, -1.0_f32],
-                        perspectiveMatrix: MatrixOperation::perspective(ratio, 1.0, 1.0, 3.0)
-                    };
+                    perspective_matrix = MatrixOperation::perspective(ratio, 1.0, 1.0, 3.0);
                     return;
                 }
                 _ => return,
@@ -86,6 +80,27 @@ fn main() {
         let mut target = display.draw();
         target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
 
+        let mut uniforms = uniform! {
+            cameraToClipMatrix: perspective_matrix,
+            modelToCameraMatrix: MatrixOperation::translation(0.0, 0.0, -1.0)
+        };
+
+        println!("uniform: {:#?}", &perspective_matrix);
+        println!("uniform: {:#?}", &MatrixOperation::translation(0.0, 0.0, -1.0));
+        target
+            .draw(
+                &vertex_buffer,
+                &indices,
+                &program,
+                &uniforms,
+                &draw_parameters,
+            )
+            .unwrap();
+
+        uniforms = uniform! {
+            cameraToClipMatrix: perspective_matrix,
+            modelToCameraMatrix: MatrixOperation::translation(-0.25, -0.25, 1.25)
+        };
         target
             .draw(
                 &vertex_buffer,
