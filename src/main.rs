@@ -81,12 +81,9 @@ fn main() {
         target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
 
         let uniforms = uniform! {
-            modelToCameraMatrix: MatrixOperation::translation(0.5, 0.5, -3.0),
+            modelToCameraMatrix: MatrixOperation::translation(1.5, 1.5, -3.0),
             cameraToClipMatrix: perspective_matrix
         };
-
-        println!("modelToCameraMatrix: {:#?}", MatrixOperation::translation(0.5, 0.5, -3.0));
-        println!("cameraToClipMatrix: {:#?}", perspective_matrix);
 
         target
             .draw(
