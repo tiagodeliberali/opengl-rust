@@ -64,7 +64,6 @@ impl PartialEq for Matrix4 {
     }
 }
 
-
 #[derive(Debug, Clone, Copy)]
 pub struct Vector3 {
     pub x: f32,
@@ -181,9 +180,12 @@ mod tests {
     fn vector3_normalized() {
         let a = Vector3::new(3.0, 1.0, 2.0);
 
-        assert_eq!(a.normalized(), Vector3::new(0.8017837, 0.26726124, 0.5345225));
+        assert_eq!(
+            a.normalized(),
+            Vector3::new(0.8017837, 0.26726124, 0.5345225)
+        );
     }
-    
+
     #[test]
     fn vector3_to_array() {
         let a = Vector3::new(3.0, 1.0, 2.0);
@@ -242,7 +244,7 @@ mod tests {
     #[test]
     fn degree_to_radians_values() {
         assert_eq!(0.017453292, degree_to_radians(1.0));
-        
+
         assert_eq!(0.5235988, degree_to_radians(30.0));
 
         assert_eq!(0.0, degree_to_radians(0.0));
