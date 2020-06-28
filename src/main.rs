@@ -1,10 +1,14 @@
 #[macro_use]
 extern crate glium;
 
+mod coordinates;
+mod math;
 mod matrices;
 mod primitives;
 mod shaders;
 
+use coordinates::SphereVector;
+use math::Vector3;
 use matrices::MatrixOperation;
 use primitives::Primitive;
 use shaders::{FragmentShader, VertexShader};
@@ -17,6 +21,7 @@ fn main() {
     let wb = glutin::window::WindowBuilder::new()
         .with_title("Hello OpenGL - focus on game math")
         .with_inner_size(glutin::dpi::LogicalSize::new(600.0, 600.0));
+
     let cb = glutin::ContextBuilder::new();
     let display = glium::Display::new(wb, cb, &event_loop).unwrap();
 
@@ -32,13 +37,13 @@ fn main() {
 
     let program = glium::Program::from_source(
         &display,
-        &VertexShader::color_model_camera_clip(),
+        &VertexShader::color_world_model_camera_clip(),
         &FragmentShader::smooth_color(),
         None,
     )
     .unwrap();
 
-    let mut perspective_matrix = MatrixOperation::perspective(1.0, 1.0, 1.0, 3.0);
+    let mut perspective_matrix = MatrixOperation::perspective(1.0, 1.0, 1.0, 1000.0);
 
     let draw_parameters = glium::DrawParameters {
         depth: glium::Depth {
@@ -64,7 +69,7 @@ fn main() {
                 }
                 glutin::event::WindowEvent::Resized(new_size) => {
                     let ratio = new_size.width as f32 / new_size.height as f32;
-                    perspective_matrix = MatrixOperation::perspective(ratio, 1.0, 1.0, 30.0);
+                    perspective_matrix = MatrixOperation::perspective(ratio, 1.0, 1.0, 1000.0);
                     return;
                 }
                 _ => return,
@@ -80,24 +85,13 @@ fn main() {
         let mut target = display.draw();
         target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
 
-        let mut uniforms = uniform! {
-            modelToCameraMatrix: MatrixOperation::translation(1.5, 1.5, -3.0),
-            cameraToClipMatrix: perspective_matrix
-        };
+        let camera_target = Vector3::new(0.0, 0.0, 0.0);
+        let camera_position = SphereVector::new(0.0, 30.0, 5.0);
+        let camera_position = camera_position.to_euclidean(camera_target);
 
-        target
-            .draw(
-                &vertex_buffer,
-                &indices,
-                &program,
-                &uniforms,
-                &draw_parameters,
-            )
-            .unwrap();
-
-
-        uniforms = uniform! {
-            modelToCameraMatrix: MatrixOperation::translation(-2.0, -2.0, -3.0) * MatrixOperation::scale(0.5, 0.5, 0.5),
+        let uniforms = uniform! {
+            modelToWorldMatrix: MatrixOperation::translation(1.5, 1.5, -3.0) * MatrixOperation::scale(0.5, 1.0, 0.5),
+            worldToCameraMatrix: MatrixOperation::camera_matrix(camera_position, camera_target, Vector3::up()),
             cameraToClipMatrix: perspective_matrix
         };
 

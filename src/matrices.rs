@@ -1,62 +1,5 @@
-use glium::uniforms::{AsUniformValue, UniformValue};
-use std::ops;
+use crate::math::{Matrix4, Vector3};
 
-#[derive(Debug, Clone, Copy)]
-pub struct Matrix4 {
-    data: [f32; 16],
-}
-
-impl AsUniformValue for Matrix4 {
-    #[inline]
-    fn as_uniform_value(&self) -> UniformValue {
-        UniformValue::Mat4(self.to_opengl_array())
-    }
-}
-
-impl ops::Mul<Matrix4> for Matrix4 {
-    type Output = Matrix4;
-
-    #[rustfmt::skip]
-    fn mul(self, other: Matrix4) -> Self::Output {
-        Matrix4::from([
-            self.data[0] * other.data[0] + self.data[1] * other.data[4] + self.data[2] * other.data[8] + self.data[3] * other.data[12],
-            self.data[0] * other.data[1] + self.data[1] * other.data[5] + self.data[2] * other.data[9] + self.data[3] * other.data[13],
-            self.data[0] * other.data[2] + self.data[1] * other.data[6] + self.data[2] * other.data[10] + self.data[3] * other.data[14],
-            self.data[0] * other.data[3] + self.data[1] * other.data[7] + self.data[2] * other.data[11] + self.data[3] * other.data[15],
-
-            self.data[4] * other.data[0] + self.data[5] * other.data[4] + self.data[6] * other.data[8] + self.data[7] * other.data[12],
-            self.data[4] * other.data[1] + self.data[5] * other.data[5] + self.data[6] * other.data[9] + self.data[7] * other.data[13],
-            self.data[4] * other.data[2] + self.data[5] * other.data[6] + self.data[6] * other.data[10] + self.data[7] * other.data[14],
-            self.data[4] * other.data[3] + self.data[5] * other.data[7] + self.data[6] * other.data[11] + self.data[7] * other.data[15],
-
-            self.data[8] * other.data[0] + self.data[9] * other.data[4] + self.data[10] * other.data[8] + self.data[11] * other.data[12],
-            self.data[8] * other.data[1] + self.data[9] * other.data[5] + self.data[10] * other.data[9] + self.data[11] * other.data[13],
-            self.data[8] * other.data[2] + self.data[9] * other.data[6] + self.data[10] * other.data[10] + self.data[11] * other.data[14],
-            self.data[8] * other.data[3] + self.data[9] * other.data[7] + self.data[10] * other.data[11] + self.data[11] * other.data[15],
-
-            self.data[12] * other.data[0] + self.data[13] * other.data[4] + self.data[14] * other.data[8] + self.data[15] * other.data[12],
-            self.data[12] * other.data[1] + self.data[13] * other.data[5] + self.data[14] * other.data[9] + self.data[15] * other.data[13],
-            self.data[12] * other.data[2] + self.data[13] * other.data[6] + self.data[14] * other.data[10] + self.data[15] * other.data[14],
-            self.data[12] * other.data[3] + self.data[13] * other.data[7] + self.data[14] * other.data[11] + self.data[15] * other.data[15],
-        ])
-    }
-}
-
-impl Matrix4 {
-    pub fn from(data: [f32; 16]) -> Matrix4 {
-        Matrix4 { data }
-    }
-
-    #[rustfmt::skip]
-    pub fn to_opengl_array(self) -> [[f32; 4]; 4] {
-        [
-            [self.data[0], self.data[4], self.data[8], self.data[12]],
-            [self.data[1], self.data[5], self.data[9], self.data[13]],
-            [self.data[2], self.data[6], self.data[10], self.data[14]],
-            [self.data[3], self.data[7], self.data[11], self.data[15]],
-        ]
-    }
-}
 pub struct MatrixOperation {}
 
 #[rustfmt::skip]
@@ -91,5 +34,29 @@ impl MatrixOperation {
             0.0, 0.0, z, 0.0,
             0.0, 0.0, 0.0, 1.0,
         ])
+    }
+
+    pub fn camera_matrix(camera_position: Vector3, target: Vector3, up_vector: Vector3) -> Matrix4 {
+        let look_direction = (target - camera_position).normalized();
+        let up_vector = up_vector.normalized();
+
+        let right_direction = look_direction.cross(up_vector);
+        let perpedicular_up_direction = right_direction.cross(look_direction);
+
+        let rotation_matrix = Matrix4::from([
+            right_direction.x, right_direction.y, right_direction.z, 0.0,
+            perpedicular_up_direction.x, perpedicular_up_direction.y, perpedicular_up_direction.z, 0.0,
+            look_direction.x, look_direction.y, look_direction.z, 0.0,
+            0.0, 0.0, 0.0, 1.0
+        ]);
+
+        let translation_matrix = Matrix4::from([
+            1.0, 0.0, 0.0, -camera_position.x,
+            0.0, 1.0, 0.0, -camera_position.y,
+            0.0, 0.0, 1.0, -camera_position.z,
+            0.0, 0.0, 0.0, 1.0
+        ]);
+
+        return rotation_matrix * translation_matrix;
     }
 }
