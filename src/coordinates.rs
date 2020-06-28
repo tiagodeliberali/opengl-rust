@@ -28,7 +28,11 @@ impl SphereVector {
         let cos_azimuthal = f32::cos(azimuthal);
         let sin_azimuthal = f32::sin(azimuthal);
 
-        let camera_direction = Vector3::new(sin_elevation * cos_azimuthal, cos_elevation, sin_elevation * sin_azimuthal);
+        let camera_direction = Vector3::new(
+            sin_elevation * cos_azimuthal,
+            cos_elevation,
+            sin_elevation * sin_azimuthal,
+        );
         camera_direction * self.radius
     }
 }
@@ -59,10 +63,19 @@ mod tests {
 
     #[test]
     fn sphere_vector_to_cartesian() {
-        assert_eq!(Vector3::new(1.0, -0.00000004371139, 0.0), SphereVector::new(1.0, 0.0, 0.0).to_cartesian());
+        assert_eq!(
+            Vector3::new(1.0, -0.00000004371139, 0.0),
+            SphereVector::new(1.0, 0.0, 0.0).to_cartesian()
+        );
 
-        assert_eq!(Vector3::new(-0.00000004371139, -0.00000004371139, 1.0), SphereVector::new(1.0, 0.0, 90.0).to_cartesian());
+        assert_eq!(
+            Vector3::new(-0.00000004371139, -0.00000004371139, 1.0),
+            SphereVector::new(1.0, 0.0, 90.0).to_cartesian()
+        );
 
-        assert_eq!(Vector3::new(0.8660253, -1.0000001, 1.5), SphereVector::new(2.0, 30.0, 60.0).to_cartesian());
+        assert_eq!(
+            Vector3::new(0.8660253, -1.0000001, 1.5),
+            SphereVector::new(2.0, 30.0, 60.0).to_cartesian()
+        );
     }
 }
