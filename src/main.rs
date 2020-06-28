@@ -55,6 +55,8 @@ fn main() {
         ..Default::default()
     };
 
+    let mut step = 0;
+
     event_loop.run(move |event, _, control_flow| {
         let next_frame_time =
             std::time::Instant::now() + std::time::Duration::from_nanos(16_666_667);
@@ -89,8 +91,31 @@ fn main() {
         let camera_position = SphereVector::new(5.0, 30.0, 0.0);
         let camera_position = camera_position.to_cartesian() + camera_target;
 
+        step += 1;
+        step = step % 360;
+
+        let instance_position = MatrixOperation::translation(SphereVector::new(1.5, -20.0, step as f32).to_cartesian())
+            * MatrixOperation::translation(Vector3::new(0.0, 0.0, -5.0))
+            * MatrixOperation::scale(Vector3::new(0.5, 0.5, 0.5));
+
         let uniforms = uniform! {
-            modelToWorldMatrix: MatrixOperation::translation(1.5, 1.5, -3.0) * MatrixOperation::scale(0.5, 1.0, 0.5),
+            modelToWorldMatrix: instance_position,
+            worldToCameraMatrix: MatrixOperation::camera_matrix(camera_position, camera_target, Vector3::up()),
+            cameraToClipMatrix: perspective_matrix
+        };
+
+        target
+            .draw(
+                &vertex_buffer,
+                &indices,
+                &program,
+                &uniforms,
+                &draw_parameters,
+            )
+            .unwrap();
+
+        let uniforms = uniform! {
+            modelToWorldMatrix: MatrixOperation::translation(Vector3::new(0.0, 0.0, -5.0)),
             worldToCameraMatrix: MatrixOperation::camera_matrix(camera_position, camera_target, Vector3::up()),
             cameraToClipMatrix: perspective_matrix
         };

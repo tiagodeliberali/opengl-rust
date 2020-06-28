@@ -18,21 +18,21 @@ impl MatrixOperation {
         ])
     }
 
-    pub fn translation(x: f32, y: f32, z: f32) -> Matrix4 {
+    pub fn translation(input: Vector3) -> Matrix4 {
         Matrix4::from([
-            1.0, 0.0, 0.0, x,
-            0.0, 1.0, 0.0, y,
-            0.0, 0.0, 1.0, z,
+            1.0, 0.0, 0.0, input.x,
+            0.0, 1.0, 0.0, input.y,
+            0.0, 0.0, 1.0, input.z,
             0.0, 0.0, 0.0, 1.0,
         ])
     }
 
-    pub fn scale(x: f32, y: f32, z: f32) -> Matrix4 {
+    pub fn scale(input: Vector3) -> Matrix4 {
         Matrix4::from([
-            x, 0.0, 0.0, 0.0,
-            0.0, y, 0.0, 0.0,
-            0.0, 0.0, z, 0.0,
-            0.0, 0.0, 0.0, 1.0,
+            input.x,    0.0,        0.0,        0.0,
+            0.0,        input.y,    0.0,        0.0,
+            0.0,        0.0,        input.z,    0.0,
+            0.0,        0.0,        0.0,        1.0,
         ])
     }
 
