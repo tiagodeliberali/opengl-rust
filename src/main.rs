@@ -86,8 +86,8 @@ fn main() {
         target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
 
         let camera_target = Vector3::new(0.0, 0.0, 0.0);
-        let camera_position = SphereVector::new(0.0, 30.0, 5.0);
-        let camera_position = camera_position.to_euclidean(camera_target);
+        let camera_position = SphereVector::new(5.0, 30.0, 0.0);
+        let camera_position = camera_position.to_cartesian() + camera_target;
 
         let uniforms = uniform! {
             modelToWorldMatrix: MatrixOperation::translation(1.5, 1.5, -3.0) * MatrixOperation::scale(0.5, 1.0, 0.5),
