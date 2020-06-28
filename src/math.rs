@@ -58,6 +58,13 @@ impl Matrix4 {
     }
 }
 
+impl PartialEq for Matrix4 {
+    fn eq(&self, other: &Self) -> bool {
+        self.data == other.data
+    }
+}
+
+
 #[derive(Debug, Clone, Copy)]
 pub struct Vector3 {
     pub x: f32,
@@ -149,6 +156,28 @@ mod tests {
     use super::*;
 
     #[test]
+    #[rustfmt::skip]
+    fn matrix4_mul() {
+        let a = Matrix4::from([
+            1.0,    0.0,    -4.0,   18.3, 
+            0.12,   22.0,   -4.0,   15.6,
+            3.0,    6.0,    8.0,    -18.3,
+            3.4,    -4.0,   7.0,    38.0]);
+        let b = Matrix4::from([
+            5.0,    6.0,    17.0,   -3.0,
+            26.0,   7.0,    -5.0,   -18.4,
+            -7.3,   5.0,    0.12,   2.0, 
+            12.8,   6.0,    0.0,    5.0]);
+
+        // nice to see some """issues""" with f32
+        assert_eq!(a * b, Matrix4::from([
+            268.44,     95.799995,  16.52,    80.5,
+            801.48,     228.32,     -108.44,  -335.15997,
+            -121.63999, -9.799995,  21.96,    -194.9,
+            348.3,      255.4,      78.64,    267.4]));
+    }
+
+    #[test]
     fn vector3_normalized() {
         let a = Vector3::new(3.0, 1.0, 2.0);
 
@@ -176,6 +205,29 @@ mod tests {
         let b = Vector3::new(12.0, -12.0, 4.0);
 
         assert_eq!(a.cross(b), Vector3::new(0.0, 0.0, 0.0));
+    }
+
+    #[test]
+    fn vector3_add() {
+        let a = Vector3::new(3.0, 7.0, 4.0);
+        let b = Vector3::new(2.0, 9.0, 11.0);
+
+        assert_eq!(a + b, Vector3::new(5.0, 16.0, 15.0));
+    }
+
+    #[test]
+    fn vector3_sub() {
+        let a = Vector3::new(3.0, 3.0, 3.0);
+        let b = Vector3::new(1.0, 2.0, 3.0);
+
+        assert_eq!(a - b, Vector3::new(2.0, 1.0, 0.0));
+    }
+
+    #[test]
+    fn vector3_mul_scalar() {
+        let a = Vector3::new(7.0, -3.0, 0.0);
+
+        assert_eq!(a * 2.0, Vector3::new(14.0, -6.0, 0.0));
     }
 
     #[test]
