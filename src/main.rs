@@ -87,9 +87,12 @@ fn main() {
         let mut target = display.draw();
         target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
 
-        let camera_target = Vector3::new(0.0, 0.0, 0.0);
-        let camera_position = SphereVector::new(5.0, 30.0, 0.0);
-        let camera_position = camera_position.to_cartesian() + camera_target;
+        // CAMERA SYSTEM
+        let camera_position = Vector3::new(-2.0, 3.0, -8.0);
+        let target_camera_position = Vector3::new(0.0, 0.0, -5.0);
+        let camera_matrix = MatrixOperation::camera_matrix(camera_position, target_camera_position, Vector3::up());
+
+        // MOVING BLOCK ON SPHERICAL COORDINATES
 
         step += 1;
         step = step % 360;
@@ -100,7 +103,7 @@ fn main() {
 
         let uniforms = uniform! {
             modelToWorldMatrix: instance_position,
-            worldToCameraMatrix: MatrixOperation::camera_matrix(camera_position, camera_target, Vector3::up()),
+            worldToCameraMatrix: camera_matrix,
             cameraToClipMatrix: perspective_matrix
         };
 
@@ -114,9 +117,29 @@ fn main() {
             )
             .unwrap();
 
+        // TARGET CAMERA BLOCK
+
         let uniforms = uniform! {
-            modelToWorldMatrix: MatrixOperation::translation(Vector3::new(0.0, 0.0, -5.0)),
-            worldToCameraMatrix: MatrixOperation::camera_matrix(camera_position, camera_target, Vector3::up()),
+            modelToWorldMatrix: MatrixOperation::translation(target_camera_position),
+            worldToCameraMatrix: camera_matrix,
+            cameraToClipMatrix: perspective_matrix
+        };
+
+        target
+            .draw(
+                &vertex_buffer,
+                &indices,
+                &program,
+                &uniforms,
+                &draw_parameters,
+            )
+            .unwrap();
+
+        // CAMERA BLOCK
+
+        let uniforms = uniform! {
+            modelToWorldMatrix: MatrixOperation::translation(camera_position),
+            worldToCameraMatrix: camera_matrix,
             cameraToClipMatrix: perspective_matrix
         };
 

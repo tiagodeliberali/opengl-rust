@@ -10,7 +10,7 @@ uniform mat4 modelToCameraMatrix;
 
 void main()
 {
-	vec4 cameraPos = modelToCameraMatrix * vec4(position, 1.0);
-	gl_Position = cameraToClipMatrix * cameraPos;
-	theColor = color;
+    vec4 cameraPos = modelToCameraMatrix * vec4(position, 1.0);
+    gl_Position = cameraToClipMatrix * cameraPos;
+    theColor = color;
 }

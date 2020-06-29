@@ -44,10 +44,10 @@ impl MatrixOperation {
         let perpedicular_up_direction = right_direction.cross(look_direction);
 
         let rotation_matrix = Matrix4::from([
-            right_direction.x, right_direction.y, right_direction.z, 0.0,
-            perpedicular_up_direction.x, perpedicular_up_direction.y, perpedicular_up_direction.z, 0.0,
-            look_direction.x, look_direction.y, look_direction.z, 0.0,
-            0.0, 0.0, 0.0, 1.0
+            right_direction.x,              right_direction.y,              right_direction.z,              0.0,
+            perpedicular_up_direction.x,    perpedicular_up_direction.y,    perpedicular_up_direction.z,    0.0,
+            -look_direction.x,              -look_direction.y,              -look_direction.z,              0.0,
+            0.0,                            0.0,                            0.0,                            1.0
         ]);
 
         let translation_matrix = Matrix4::from([
