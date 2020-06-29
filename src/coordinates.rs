@@ -13,7 +13,7 @@ pub struct SphereVector {
 impl SphereVector {
     pub fn new(radius: f32, elevation: f32, azimuthal: f32) -> SphereVector {
         SphereVector {
-            radius: f32::max(1.0, radius),
+            radius: radius.max(1.0),
             azimuthal,
             elevation: clamp(elevation, -78.75, 78.75),
         }
@@ -23,10 +23,10 @@ impl SphereVector {
         let elevation = degree_to_radians(self.elevation + 90.0);
         let azimuthal = degree_to_radians(self.azimuthal);
 
-        let sin_elevation = f32::sin(elevation);
-        let cos_elevation = f32::cos(elevation);
-        let cos_azimuthal = f32::cos(azimuthal);
-        let sin_azimuthal = f32::sin(azimuthal);
+        let sin_elevation = elevation.sin();
+        let cos_elevation = elevation.cos();
+        let cos_azimuthal = azimuthal.cos();
+        let sin_azimuthal = azimuthal.sin();
 
         let camera_direction = Vector3::new(
             sin_elevation * cos_azimuthal,
