@@ -13,6 +13,10 @@ use matrices::MatrixOperation;
 use primitives::Primitive;
 use shaders::{FragmentShader, VertexShader};
 
+const Z_NEAR: f32 = 1.0;
+const Z_FAR: f32 = 1000.0;
+const VIEW_ANGLE: f32 = 45.0;
+
 fn main() {
     #[allow(unused_imports)]
     use glium::{glutin, Surface};
@@ -43,7 +47,7 @@ fn main() {
     )
     .unwrap();
 
-    let mut perspective_matrix = MatrixOperation::perspective(1.0, 1.0, 1.0, 1000.0);
+    let mut perspective_matrix = MatrixOperation::perspective(1.0, VIEW_ANGLE, Z_NEAR, Z_FAR);
 
     let draw_parameters = glium::DrawParameters {
         depth: glium::Depth {
@@ -71,7 +75,7 @@ fn main() {
                 }
                 glutin::event::WindowEvent::Resized(new_size) => {
                     let ratio = new_size.width as f32 / new_size.height as f32;
-                    perspective_matrix = MatrixOperation::perspective(ratio, 1.0, 1.0, 1000.0);
+                    perspective_matrix = MatrixOperation::perspective(ratio, VIEW_ANGLE, Z_NEAR, Z_FAR);
                     return;
                 }
                 _ => return,

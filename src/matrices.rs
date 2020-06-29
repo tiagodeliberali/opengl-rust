@@ -1,4 +1,4 @@
-use crate::math::{Matrix4, Vector3};
+use crate::math::{Matrix4, Vector3, degree_to_radians};
 
 pub struct MatrixOperation {}
 
@@ -6,10 +6,12 @@ pub struct MatrixOperation {}
 impl MatrixOperation {
     pub fn perspective(
         display_ratio: f32,
-        frustum_scale: f32,
+        view_angle: f32,
         z_near: f32,
         z_far: f32,
     ) -> Matrix4 {
+        let view_angle = degree_to_radians(view_angle);
+        let frustum_scale = 1.0 / (view_angle / 2.0).tan();
         Matrix4::from([
             frustum_scale / display_ratio, 0.0, 0.0, 0.0,
             0.0, frustum_scale, 0.0, 0.0,
