@@ -48,6 +48,16 @@ impl Matrix4 {
     }
 
     #[rustfmt::skip]
+    pub fn identity() -> Matrix4 {
+        Matrix4::from([
+            1.0, 0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            0.0, 0.0, 0.0, 1.0,
+        ])
+    }
+
+    #[rustfmt::skip]
     pub fn to_opengl_array(self) -> [[f32; 4]; 4] {
         [
             [self.data[0], self.data[4], self.data[8], self.data[12]],

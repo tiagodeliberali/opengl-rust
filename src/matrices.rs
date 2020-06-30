@@ -1,4 +1,4 @@
-use crate::math::{Matrix4, Vector3, degree_to_radians};
+use crate::math::{degree_to_radians, Matrix4, Vector3};
 
 pub struct MatrixOperation {}
 

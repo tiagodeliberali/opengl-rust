@@ -1,3 +1,7 @@
+use crate::models::Prefab;
+use glium::backend::glutin::Display;
+use std::sync::Arc;
+
 #[derive(Copy, Clone)]
 pub struct Vertex {
     pub position: [f32; 3],
@@ -8,7 +12,7 @@ implement_vertex!(Vertex, position, color);
 pub struct Primitive {}
 
 impl Primitive {
-    pub fn cube() -> (Vec<Vertex>, [u16; 36]) {
+    pub fn cube(display: Display) -> Arc<Prefab> {
         let shape = vec![
             Vertex {
                 position: [0.5, 0.5, 0.5],
@@ -109,7 +113,7 @@ impl Primitive {
         ];
 
         #[rustfmt::skip]
-        let indices: [u16; 36] = [
+        let indices: Vec<u16> = vec![
             0, 2, 1,
             1, 2, 3,
 
@@ -129,6 +133,6 @@ impl Primitive {
             21, 23, 22,
         ];
 
-        (shape, indices)
+        Prefab::build(display, shape, indices)
     }
 }
