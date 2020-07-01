@@ -37,10 +37,6 @@ fn main() {
     // ITEMS TO DRAW
     let cube_prefab = Primitive::cube(display.clone());
 
-    let mut cube_instance1 = Instance::new(cube_prefab.clone());
-    cube_instance1.set_scale(Vector3::new(1.5, 1.5, 1.5));
-    cube_instance1.set_translation(Vector3::new(0.0, 0.0, -5.0));
-
     let mut step = 0;
 
     event_loop.run(move |event, _, control_flow| {
@@ -76,6 +72,11 @@ fn main() {
         // MOVING BLOCK ON SPHERICAL COORDINATES
         step += 1;
         step = step % 360;
+
+        let mut cube_instance1 = Instance::new(cube_prefab.clone());
+        cube_instance1.set_rotate_z(step as f32);
+        cube_instance1.set_scale(Vector3::new(1.5, 1.5, 1.5));
+        cube_instance1.set_translation(Vector3::new(0.0, 0.0, -5.0));
 
         let mut cube_instance2 = Instance::new(cube_prefab.clone());
         cube_instance2.set_scale(Vector3::new(0.5, 0.5, 0.5));

@@ -1,4 +1,4 @@
-use crate::math::{Matrix4, Vector3};
+use crate::math::{Matrix4, Quaternion, Vector3};
 use crate::matrices::MatrixOperation;
 use crate::primitives::Vertex;
 use crate::shaders::{FragmentShader, VertexShader};
@@ -118,5 +118,17 @@ impl Instance {
 
     pub fn set_translation(&mut self, vector: Vector3) {
         self.operations = MatrixOperation::translation(vector) * self.operations;
+    }
+
+    pub fn set_rotate_x(&mut self, angle: f32) {
+        self.operations = Quaternion::rotate_x(angle) * self.operations;
+    }
+
+    pub fn set_rotate_y(&mut self, angle: f32) {
+        self.operations = Quaternion::rotate_y(angle) * self.operations;
+    }
+
+    pub fn set_rotate_z(&mut self, angle: f32) {
+        self.operations = Quaternion::rotate_z(angle) * self.operations;
     }
 }

@@ -91,7 +91,7 @@ impl Vector3 {
     }
 
     pub fn normalized(self) -> Self {
-        let norm: f32 = (self.x.exp2() + self.y.exp2() + self.z.exp2()).sqrt();
+        let norm: f32 = (self.x * self.x + self.y * self.y + self.z * self.z).sqrt();
         let mut result = self.clone();
 
         result.x /= norm;
@@ -148,6 +148,79 @@ impl AsUniformValue for Vector3 {
     #[inline]
     fn as_uniform_value(&self) -> UniformValue {
         UniformValue::Vec3(self.to_array())
+    }
+}
+
+pub struct Quaternion {
+    data: [f32; 4],
+}
+
+/// reference: https://paroj.github.io/gltut/Positioning/Tut08%20Quaternions.html
+impl Quaternion {
+    pub fn new(vector: Vector3, angle: f32) -> Self {
+        let vector = vector.normalized();
+        let angle = degree_to_radians(angle);
+
+        let sin_value = (angle / 2.0).sin();
+        let cos_value = (angle / 2.0).cos();
+
+        Quaternion {
+            data: [
+                vector.x * sin_value,
+                vector.y * sin_value,
+                vector.z * sin_value,
+                cos_value,
+            ],
+        }
+    }
+
+    #[rustfmt::skip]
+    pub fn to_matrix(self) -> Matrix4 {
+        Matrix4::from([
+            1.0 - 2.0 * self.data[1] * self.data[1] - 2.0 * self.data[2] * self.data[2],    2.0 * self.data[0] * self.data[1] - 2.0 * self.data[3] * self.data[2],          2.0 * self.data[0] * self.data[2] + 2.0 * self.data[3] * self.data[1],          0.0,
+            2.0 * self.data[0] * self.data[1] + 2.0 * self.data[3] * self.data[2],          1.0 - 2.0 * self.data[0] * self.data[0] - 2.0 * self.data[2] * self.data[2],    2.0 * self.data[1] * self.data[2] - 2.0 * self.data[3] * self.data[0],          0.0,
+            2.0 * self.data[0] * self.data[2] - 2.0 * self.data[3] * self.data[1],          2.0 * self.data[1] * self.data[2] + 2.0 * self.data[3] * self.data[0],          1.0 - 2.0 * self.data[0] * self.data[0] - 2.0 * self.data[1] * self.data[1],    0.0,
+            0.0,                                                                            0.0,                                                                            0.0,                                                                            1.0,
+        ])
+    }
+
+    pub fn rotate_x(angle: f32) -> Matrix4 {
+        Quaternion::new(Vector3::new(1.0, 0.0, 0.0), angle).to_matrix()
+    }
+
+    pub fn rotate_y(angle: f32) -> Matrix4 {
+        Quaternion::new(Vector3::new(0.0, 1.0, 0.0), angle).to_matrix()
+    }
+
+    pub fn rotate_z(angle: f32) -> Matrix4 {
+        Quaternion::new(Vector3::new(0.0, 0.0, 1.0), angle).to_matrix()
+    }
+}
+
+impl ops::Mul<Quaternion> for Quaternion {
+    type Output = Quaternion;
+
+    fn mul(self, other: Quaternion) -> Self::Output {
+        Quaternion {
+            data: [
+                self.data[3] * other.data[0]
+                    + self.data[0] * other.data[3]
+                    + self.data[1] * other.data[2]
+                    - self.data[2] * other.data[1],
+                self.data[3] * other.data[1]
+                    + self.data[1] * other.data[3]
+                    + self.data[2] * other.data[0]
+                    - self.data[0] * other.data[2],
+                self.data[3] * other.data[2]
+                    + self.data[2] * other.data[3]
+                    + self.data[0] * other.data[1]
+                    - self.data[1] * other.data[0],
+                self.data[3] * other.data[3]
+                    - self.data[0] * other.data[0]
+                    - self.data[1] * other.data[1]
+                    - self.data[2] * other.data[2],
+            ],
+        }
     }
 }
 
