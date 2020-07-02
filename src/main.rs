@@ -10,8 +10,9 @@ mod shaders;
 
 use coordinates::SphereVector;
 use math::Vector3;
-use models::{Instance, World};
+use models::{Instance, Prefab, World};
 use primitives::Primitive;
+use std::sync::Arc;
 
 use glium::backend::glutin::Display;
 use glium::glutin::event_loop::{ControlFlow, EventLoop};
@@ -28,6 +29,40 @@ fn config_display(event_loop: &EventLoop<()>) -> Display {
     display
 }
 
+fn draw(world: &World, display: Display, step: &mut u16, cube_prefab: Arc<Prefab>) {
+    let mut target = display.draw();
+    target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
+
+    // MOVING BLOCK ON SPHERICAL COORDINATES
+    *step = *step + 1;
+    *step = *step % 360;
+
+    let mut cube_instance1 = Instance::new(cube_prefab.clone());
+    cube_instance1.set_rotate_z(*step as f32);
+    cube_instance1.set_scale(Vector3::new(1.5, 1.5, 1.5));
+    cube_instance1.set_translation(Vector3::new(0.0, 0.0, -5.0));
+
+    let mut cube_instance2 = Instance::new(cube_prefab.clone());
+    cube_instance2.set_scale(Vector3::new(0.5, 0.5, 0.5));
+    cube_instance2.set_translation(Vector3::new(0.0, 0.0, -5.0));
+    cube_instance2.set_translation(SphereVector::new(1.5, -20.0, *step as f32).to_cartesian());
+
+    world.draw(&mut target, &cube_instance2);
+
+    let mut cube_instance3 = Instance::new(cube_prefab.clone());
+    cube_instance3.set_scale(Vector3::new(0.5, 0.5, 0.5));
+    cube_instance3.set_translation(Vector3::new(0.0, 0.0, -5.0));
+    cube_instance3
+        .set_translation(SphereVector::new(2.0, -45.0, *step as f32 + 90.0).to_cartesian());
+
+    world.draw(&mut target, &cube_instance3);
+
+    // TARGET CAMERA BLOCK
+    world.draw(&mut target, &cube_instance1);
+
+    target.finish().unwrap();
+}
+
 fn main() {
     let event_loop = EventLoop::new();
     let display = config_display(&event_loop);
@@ -39,11 +74,13 @@ fn main() {
 
     let mut step = 0;
 
-    event_loop.run(move |event, _, control_flow| {
-        let next_frame_time =
-            std::time::Instant::now() + std::time::Duration::from_nanos(16_666_667);
+    let mut next_frame_time = std::time::Instant::now();
 
-        *control_flow = ControlFlow::WaitUntil(next_frame_time);
+    event_loop.run(move |event, _, control_flow| {
+        if next_frame_time.elapsed() > std::time::Duration::from_nanos(16_666_667) {
+            draw(&world, display.clone(), &mut step, cube_prefab.clone());
+            next_frame_time = std::time::Instant::now();
+        }
 
         match event {
             glutin::event::Event::WindowEvent { event, .. } => match event {
@@ -56,46 +93,9 @@ fn main() {
                     world.change_perspective_ratio(ratio);
                     return;
                 }
-                _ => return,
+                _ => (),
             },
-            glutin::event::Event::NewEvents(cause) => match cause {
-                glutin::event::StartCause::ResumeTimeReached { .. } => (),
-                glutin::event::StartCause::Init => (),
-                _ => return,
-            },
-            _ => return,
+            _ => (),
         }
-
-        let mut target = display.draw();
-        target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
-
-        // MOVING BLOCK ON SPHERICAL COORDINATES
-        step += 1;
-        step = step % 360;
-
-        let mut cube_instance1 = Instance::new(cube_prefab.clone());
-        cube_instance1.set_rotate_z(step as f32);
-        cube_instance1.set_scale(Vector3::new(1.5, 1.5, 1.5));
-        cube_instance1.set_translation(Vector3::new(0.0, 0.0, -5.0));
-
-        let mut cube_instance2 = Instance::new(cube_prefab.clone());
-        cube_instance2.set_scale(Vector3::new(0.5, 0.5, 0.5));
-        cube_instance2.set_translation(Vector3::new(0.0, 0.0, -5.0));
-        cube_instance2.set_translation(SphereVector::new(1.5, -20.0, step as f32).to_cartesian());
-
-        world.draw(&mut target, &cube_instance2);
-
-        let mut cube_instance3 = Instance::new(cube_prefab.clone());
-        cube_instance3.set_scale(Vector3::new(0.5, 0.5, 0.5));
-        cube_instance3.set_translation(Vector3::new(0.0, 0.0, -5.0));
-        cube_instance3
-            .set_translation(SphereVector::new(2.0, -45.0, step as f32 + 90.0).to_cartesian());
-
-        world.draw(&mut target, &cube_instance3);
-
-        // TARGET CAMERA BLOCK
-        world.draw(&mut target, &cube_instance1);
-
-        target.finish().unwrap();
     });
 }
