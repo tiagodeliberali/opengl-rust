@@ -4,24 +4,35 @@ use crate::primitives::Vertex;
 use crate::shaders::{FragmentShader, VertexShader};
 
 use glium::backend::glutin::Display;
-use glium::Surface;
-use glium::{DrawParameters, Frame, Program};
+use glium::{DrawParameters, Program};
 use glium::{IndexBuffer, VertexBuffer};
 use std::sync::Arc;
+
+use glium::glutin::event_loop::EventLoop;
+use glium::{glutin, Surface};
 
 const Z_NEAR: f32 = 1.0;
 const Z_FAR: f32 = 1000.0;
 const VIEW_ANGLE: f32 = 45.0;
 
 pub struct World<'a> {
+    pub display: Display,
     draw_parameters: DrawParameters<'a>,
     program: Program,
     perspective_matrix: Matrix4,
     camera_matrix: Matrix4,
+    update: Option<Box<dyn FnMut() -> Vec<Instance>>>,
 }
 
-impl<'a> World<'a> {
-    pub fn new(display: Display) -> World<'a> {
+impl<'a> World<'static> {
+    pub fn new(event_loop: &EventLoop<()>) -> World<'static> {
+        let wb = glutin::window::WindowBuilder::new()
+            .with_title("Hello OpenGL - focus on game math")
+            .with_inner_size(glutin::dpi::LogicalSize::new(600.0, 600.0));
+
+        let cb = glutin::ContextBuilder::new();
+        let display = glium::Display::new(wb, cb, &event_loop).unwrap();
+
         let draw_parameters = glium::DrawParameters {
             depth: glium::Depth {
                 test: glium::draw_parameters::DepthTest::IfLess,
@@ -50,33 +61,53 @@ impl<'a> World<'a> {
             MatrixOperation::camera_matrix(camera_position, target_camera_position, Vector3::up());
 
         World {
+            display,
             draw_parameters,
             program,
             perspective_matrix,
             camera_matrix,
+            update: None,
         }
+    }
+
+    pub fn draw_update(&mut self) {
+        let mut target = self.display.draw();
+        target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
+
+        if let Some(update_action) = &mut self.update {
+            let instances = update_action();
+
+            for instance in instances {
+                let uniforms = uniform! {
+                    modelToWorldMatrix: instance.operations,
+                    worldToCameraMatrix: self.camera_matrix,
+                    cameraToClipMatrix: self.perspective_matrix
+                };
+
+                target
+                    .draw(
+                        &instance.prefab.vertex,
+                        &instance.prefab.indices,
+                        &self.program,
+                        &uniforms,
+                        &self.draw_parameters,
+                    )
+                    .unwrap();
+            }
+        }
+
+        target.finish().unwrap();
+    }
+
+    pub fn set_update<F>(&mut self, update_fn: F)
+    where
+        F: 'static + FnMut() -> Vec<Instance>,
+    {
+        self.update.replace(Box::from(update_fn));
     }
 
     pub fn change_perspective_ratio(&mut self, ratio: f32) {
         self.perspective_matrix = MatrixOperation::perspective(ratio, VIEW_ANGLE, Z_NEAR, Z_FAR);
-    }
-
-    pub fn draw(&self, target: &mut Frame, instance: &Instance) {
-        let uniforms = uniform! {
-            modelToWorldMatrix: instance.operations,
-            worldToCameraMatrix: self.camera_matrix,
-            cameraToClipMatrix: self.perspective_matrix
-        };
-
-        target
-            .draw(
-                &instance.prefab.vertex,
-                &instance.prefab.indices,
-                &self.program,
-                &uniforms,
-                &self.draw_parameters,
-            )
-            .unwrap();
     }
 }
 
@@ -104,6 +135,7 @@ pub struct Instance {
     prefab: Arc<Prefab>,
 }
 
+#[allow(dead_code)]
 impl Instance {
     pub fn new(prefab: Arc<Prefab>) -> Self {
         Instance {
