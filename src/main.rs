@@ -98,8 +98,8 @@ fn main() {
 
     event_loop.run(move |event, _, control_flow| {
         if next_frame_time.elapsed() > std::time::Duration::from_nanos(16_666_667) {
-            world.draw_update();
             next_frame_time = std::time::Instant::now();
+            world.draw_update();
         }
 
         match event {
