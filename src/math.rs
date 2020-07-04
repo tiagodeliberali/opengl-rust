@@ -66,6 +66,19 @@ impl Matrix4 {
             [self.data[3], self.data[7], self.data[11], self.data[15]],
         ]
     }
+
+    /// reference: https://community.khronos.org/t/get-direction-from-transformation-matrix-or-quat/65502/2
+    pub fn get_forward_vector(self) -> Vector3 {
+        Vector3::new(self.data[2], self.data[6], self.data[10])
+    }
+
+    pub fn get_side_vector(self) -> Vector3 {
+        Vector3::new(self.data[0], self.data[4], self.data[8])
+    }
+
+    pub fn get_up_vector(self) -> Vector3 {
+        Vector3::new(self.data[1], self.data[5], self.data[9])
+    }
 }
 
 impl PartialEq for Matrix4 {

@@ -7,7 +7,7 @@ use glium::backend::glutin::Display;
 use glium::{DrawParameters, Program};
 use glium::{IndexBuffer, VertexBuffer};
 use std::collections::hash_set::Iter;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 use glium::glutin::{
@@ -26,7 +26,9 @@ pub struct World<'a> {
     program: Program,
     perspective_matrix: Matrix4,
     camera: Camera,
-    update: Option<Box<dyn FnMut() -> Vec<Instance>>>,
+    key_manager: KeyManager,
+    instances: HashMap<String, Instance>,
+    update: Option<Box<dyn FnMut(&KeyManager, &mut HashMap<String, Instance>)>>,
 }
 
 impl<'a> World<'static> {
@@ -60,14 +62,26 @@ impl<'a> World<'static> {
 
         let perspective_matrix = MatrixOperation::perspective(1.0, VIEW_ANGLE, Z_NEAR, Z_FAR);
 
+        let key_manager = KeyManager::new();
+
         World {
             display,
             draw_parameters,
             program,
             perspective_matrix,
             camera,
+            key_manager,
+            instances: HashMap::new(),
             update: None,
         }
+    }
+
+    pub fn add_instance(&mut self, name: String, instance: Instance) {
+        self.instances.insert(name, instance);
+    }
+
+    pub fn update_key_manager(&mut self, input: &KeyboardInput) {
+        self.key_manager.update(input);
     }
 
     pub fn update_camera(&mut self, camera: Camera) {
@@ -79,9 +93,9 @@ impl<'a> World<'static> {
         target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
 
         if let Some(update_action) = &mut self.update {
-            let instances = update_action();
+            update_action(&self.key_manager, &mut self.instances);
 
-            for instance in instances {
+            for instance in self.instances.values() {
                 let uniforms = uniform! {
                     modelToWorldMatrix: instance.operations,
                     worldToCameraMatrix: self.camera.build_camera_matrix(),
@@ -105,7 +119,7 @@ impl<'a> World<'static> {
 
     pub fn set_update<F>(&mut self, update_fn: F)
     where
-        F: 'static + FnMut() -> Vec<Instance>,
+        F: 'static + FnMut(&KeyManager, &mut HashMap<String, Instance>),
     {
         self.update.replace(Box::from(update_fn));
     }
@@ -167,6 +181,10 @@ impl Instance {
         }
     }
 
+    pub fn reset_transform(&mut self) {
+        self.operations = Matrix4::identity();
+    }
+
     pub fn set_scale(&mut self, vector: Vector3) {
         self.operations = MatrixOperation::scale(vector) * self.operations;
     }
@@ -185,6 +203,24 @@ impl Instance {
 
     pub fn set_rotate_z(&mut self, angle: f32) {
         self.operations = Quaternion::rotate_z(angle) * self.operations;
+    }
+
+    pub fn add_front_translation(&mut self, amount: f32) {
+        let vector = self.operations.get_forward_vector().normalized();
+        let vector = vector * amount;
+        self.operations = MatrixOperation::translation(vector) * self.operations;
+    }
+
+    pub fn add_side_translation(&mut self, amount: f32) {
+        let vector = self.operations.get_side_vector().normalized();
+        let vector = vector * amount;
+        self.operations = MatrixOperation::translation(vector) * self.operations;
+    }
+
+    pub fn add_up_translation(&mut self, amount: f32) {
+        let vector = self.operations.get_up_vector().normalized();
+        let vector = vector * amount;
+        self.operations = MatrixOperation::translation(vector) * self.operations;
     }
 }
 

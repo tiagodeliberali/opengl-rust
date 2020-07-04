@@ -10,68 +10,96 @@ mod shaders;
 
 use coordinates::SphereVector;
 use glium::glutin;
+use glium::glutin::event::VirtualKeyCode;
 use glium::glutin::event_loop::{ControlFlow, EventLoop};
 use math::Vector3;
-use models::{Camera, Instance, KeyManager, World};
+use models::{Camera, Instance, World};
 use primitives::Primitive;
 
 fn main() {
-    let mut key_manager = KeyManager::new();
     let event_loop = EventLoop::new();
-    let mut camera = Camera::new(Vector3::new(-2.0, 3.0, -8.0), Vector3::new(0.0, 0.0, -5.0));
+    let camera = Camera::new(Vector3::new(-2.0, 3.0, -8.0), Vector3::new(0.0, 0.0, -5.0));
     let mut world = World::new(&event_loop, camera.clone());
 
     // ITEMS TO DRAW
     let cube_prefab = Primitive::cube(world.display.clone());
 
+    let mut cube_instance1 = Instance::new(cube_prefab.clone());
+    cube_instance1.set_scale(Vector3::new(1.5, 1.5, 1.5));
+    cube_instance1.set_translation(Vector3::new(0.0, 0.0, -5.0));
+    world.add_instance(String::from("instance1"), cube_instance1);
+
+    world.add_instance(String::from("instance2"), Instance::new(cube_prefab.clone()));
+
+    world.add_instance(String::from("instance3"), Instance::new(cube_prefab.clone()));
+
     let mut step = 0;
 
-    world.set_update(move || {
-        let mut instances = Vec::new();
+    world.set_update(move |key_manager, instances| {
+        let mut front_movement = 0.0;
+        let mut side_movement = 0.0;
+        let mut up_movement = 0.0;
+
+        for key in key_manager.iter() {
+            match key {
+                VirtualKeyCode::W => { front_movement = 0.1 },
+                VirtualKeyCode::S => { front_movement = -0.1 },
+                VirtualKeyCode::A => { side_movement = 0.1 },
+                VirtualKeyCode::D => { side_movement = -0.1 },
+                VirtualKeyCode::Q => { up_movement = 0.1 },
+                VirtualKeyCode::E => { up_movement = -0.1 },
+                _ => (),
+            };
+        }
 
         // MOVING BLOCK ON SPHERICAL COORDINATES
         step = step + 1;
         step = step % 360;
 
-        let mut cube_instance1 = Instance::new(cube_prefab.clone());
-        cube_instance1.set_rotate_z(step as f32);
-        cube_instance1.set_scale(Vector3::new(1.5, 1.5, 1.5));
-        cube_instance1.set_translation(Vector3::new(0.0, 0.0, -5.0));
-
-        instances.push(cube_instance1);
-
-        let mut cube_instance2 = Instance::new(cube_prefab.clone());
-        cube_instance2.set_scale(Vector3::new(0.5, 0.5, 0.5));
-        cube_instance2.set_translation(Vector3::new(0.0, 0.0, -5.0));
-        cube_instance2.set_translation(SphereVector::new(1.5, -20.0, step as f32).to_cartesian());
-
-        instances.push(cube_instance2);
-
-        let mut cube_instance3 = Instance::new(cube_prefab.clone());
-        cube_instance3.set_scale(Vector3::new(0.5, 0.5, 0.5));
-        cube_instance3.set_translation(Vector3::new(0.0, 0.0, -5.0));
-        cube_instance3
-            .set_translation(SphereVector::new(2.0, -45.0, step as f32 + 90.0).to_cartesian());
-
-        instances.push(cube_instance3);
+        instances
+            .entry(String::from("instance1"))
+            .and_modify(|instance| {
+                instance.set_rotate_z(1.0);
+                instance.add_front_translation(front_movement);
+                instance.add_side_translation(side_movement);
+                instance.add_up_translation(up_movement);
+            });
 
         instances
+            .entry(String::from("instance2"))
+            .and_modify(|instance| {
+                instance.reset_transform();
+                instance.set_scale(Vector3::new(0.5, 0.5, 0.5));
+                instance.set_translation(Vector3::new(0.0, 0.0, -5.0));
+                instance.set_translation(SphereVector::new(1.5, -20.0, step as f32).to_cartesian());
+            });
+
+        instances
+            .entry(String::from("instance3"))
+            .and_modify(|instance| {
+                instance.reset_transform();
+                instance.set_scale(Vector3::new(0.5, 0.5, 0.5));
+                instance.set_translation(Vector3::new(0.0, 0.0, -5.0));
+                instance.set_translation(
+                    SphereVector::new(2.0, -45.0, step as f32 + 90.0).to_cartesian(),
+                );
+            });
     });
 
     let mut next_frame_time = std::time::Instant::now();
 
     event_loop.run(move |event, _, control_flow| {
-        for key in key_manager.iter() {
-            let movement = match key {
-                glium::glutin::event::VirtualKeyCode::W => Vector3::new(0.00001, 0.0, 0.0),
-                glium::glutin::event::VirtualKeyCode::S => Vector3::new(-0.00001, 0.0, 0.0),
-                _ => Vector3::new(0.0, 0.0, 0.0),
-            };
+        // for key in key_manager.iter() {
+        //     let movement = match key {
+        //         glium::glutin::event::VirtualKeyCode::W => Vector3::new(0.00001, 0.0, 0.0),
+        //         glium::glutin::event::VirtualKeyCode::S => Vector3::new(-0.00001, 0.0, 0.0),
+        //         _ => Vector3::new(0.0, 0.0, 0.0),
+        //     };
 
-            camera.camera_position = camera.camera_position + movement;
-            camera.target_position = camera.target_position + movement;
-            world.update_camera(camera.clone());
-        }
+        //     camera.camera_position = camera.camera_position + movement;
+        //     camera.target_position = camera.target_position + movement;
+        //     world.update_camera(camera.clone());
+        // }
 
         if next_frame_time.elapsed() > std::time::Duration::from_nanos(16_666_667) {
             world.draw_update();
@@ -90,7 +118,7 @@ fn main() {
                     return;
                 }
                 glutin::event::WindowEvent::KeyboardInput { input, .. } => {
-                    key_manager.update(&input)
+                    world.update_key_manager(&input)
                 }
                 _ => (),
             },
