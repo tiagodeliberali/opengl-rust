@@ -29,9 +29,15 @@ fn main() {
     cube_instance1.set_translation(Vector3::new(0.0, 0.0, -5.0));
     world.add_instance(String::from("instance1"), cube_instance1);
 
-    world.add_instance(String::from("instance2"), Instance::new(cube_prefab.clone()));
+    world.add_instance(
+        String::from("instance2"),
+        Instance::new(cube_prefab.clone()),
+    );
 
-    world.add_instance(String::from("instance3"), Instance::new(cube_prefab.clone()));
+    world.add_instance(
+        String::from("instance3"),
+        Instance::new(cube_prefab.clone()),
+    );
 
     let mut step = 0;
 
@@ -42,12 +48,12 @@ fn main() {
 
         for key in key_manager.iter() {
             match key {
-                VirtualKeyCode::W => { front_movement = 0.1 },
-                VirtualKeyCode::S => { front_movement = -0.1 },
-                VirtualKeyCode::A => { side_movement = 0.1 },
-                VirtualKeyCode::D => { side_movement = -0.1 },
-                VirtualKeyCode::Q => { up_movement = 0.1 },
-                VirtualKeyCode::E => { up_movement = -0.1 },
+                VirtualKeyCode::W => front_movement = 0.1,
+                VirtualKeyCode::S => front_movement = -0.1,
+                VirtualKeyCode::A => side_movement = 0.1,
+                VirtualKeyCode::D => side_movement = -0.1,
+                VirtualKeyCode::Q => up_movement = 0.1,
+                VirtualKeyCode::E => up_movement = -0.1,
                 _ => (),
             };
         }
