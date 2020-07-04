@@ -79,6 +79,10 @@ impl Matrix4 {
     pub fn get_up_vector(self) -> Vector3 {
         Vector3::new(self.data[1], self.data[5], self.data[9])
     }
+
+    pub fn get_position(self) -> Vector3 {
+        Vector3::new(self.data[3], self.data[7], self.data[11])
+    }
 }
 
 impl PartialEq for Matrix4 {

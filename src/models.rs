@@ -181,6 +181,18 @@ impl Instance {
         }
     }
 
+    pub fn clone(&self) -> Self {
+        Instance {
+            operations: self.operations.clone(),
+            prefab: self.prefab.clone(),
+        }
+    }
+
+    pub fn set_parent(&mut self, parent: &Instance) {
+        self.operations =
+            MatrixOperation::translation(parent.operations.get_position()) * self.operations;
+    }
+
     pub fn reset_transform(&mut self) {
         self.operations = Matrix4::identity();
     }

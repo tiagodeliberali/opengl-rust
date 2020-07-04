@@ -72,12 +72,14 @@ fn main() {
                 instance.add_up_translation(up_movement);
             });
 
+        let parent = instances.get("instance1").unwrap().clone();
+
         instances
             .entry(String::from("instance2"))
             .and_modify(|instance| {
                 instance.reset_transform();
                 instance.set_scale(Vector3::new(0.5, 0.5, 0.5));
-                instance.set_translation(Vector3::new(0.0, 0.0, -5.0));
+                instance.set_parent(&parent);
                 instance.set_translation(SphereVector::new(1.5, -20.0, step as f32).to_cartesian());
             });
 
