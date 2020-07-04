@@ -194,15 +194,15 @@ impl Instance {
     }
 
     pub fn set_rotate_x(&mut self, angle: f32) {
-        self.operations = Quaternion::rotate_x(angle) * self.operations;
+        self.operations = self.operations * Quaternion::rotate_x(angle);
     }
 
     pub fn set_rotate_y(&mut self, angle: f32) {
-        self.operations = Quaternion::rotate_y(angle) * self.operations;
+        self.operations = self.operations * Quaternion::rotate_y(angle);
     }
 
     pub fn set_rotate_z(&mut self, angle: f32) {
-        self.operations = Quaternion::rotate_z(angle) * self.operations;
+        self.operations = self.operations * Quaternion::rotate_z(angle);
     }
 
     pub fn add_front_translation(&mut self, amount: f32) {
