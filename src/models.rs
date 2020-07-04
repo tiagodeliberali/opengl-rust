@@ -20,12 +20,12 @@ pub struct World<'a> {
     draw_parameters: DrawParameters<'a>,
     program: Program,
     perspective_matrix: Matrix4,
-    camera_matrix: Matrix4,
+    camera: Camera,
     update: Option<Box<dyn FnMut() -> Vec<Instance>>>,
 }
 
 impl<'a> World<'static> {
-    pub fn new(event_loop: &EventLoop<()>) -> World<'static> {
+    pub fn new(event_loop: &EventLoop<()>, camera: Camera) -> World<'static> {
         let wb = glutin::window::WindowBuilder::new()
             .with_title("Hello OpenGL - focus on game math")
             .with_inner_size(glutin::dpi::LogicalSize::new(600.0, 600.0));
@@ -55,19 +55,18 @@ impl<'a> World<'static> {
 
         let perspective_matrix = MatrixOperation::perspective(1.0, VIEW_ANGLE, Z_NEAR, Z_FAR);
 
-        let camera_position = Vector3::new(-2.0, 3.0, -8.0);
-        let target_camera_position = Vector3::new(0.0, 0.0, -5.0);
-        let camera_matrix =
-            MatrixOperation::camera_matrix(camera_position, target_camera_position, Vector3::up());
-
         World {
             display,
             draw_parameters,
             program,
             perspective_matrix,
-            camera_matrix,
+            camera,
             update: None,
         }
+    }
+
+    pub fn update_camera(&mut self, camera: Camera) {
+        self.camera = camera;
     }
 
     pub fn draw_update(&mut self) {
@@ -80,7 +79,7 @@ impl<'a> World<'static> {
             for instance in instances {
                 let uniforms = uniform! {
                     modelToWorldMatrix: instance.operations,
-                    worldToCameraMatrix: self.camera_matrix,
+                    worldToCameraMatrix: self.camera.build_camera_matrix(),
                     cameraToClipMatrix: self.perspective_matrix
                 };
 
@@ -127,6 +126,25 @@ impl Prefab {
         .unwrap();
 
         Arc::new(Prefab { vertex, indices })
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct Camera {
+    pub camera_position: Vector3,
+    pub target_position: Vector3,
+}
+
+impl Camera {
+    pub fn new(camera_position: Vector3, target_position: Vector3) -> Camera {
+        Camera {
+            camera_position,
+            target_position,
+        }
+    }
+
+    pub fn build_camera_matrix(&self) -> Matrix4 {
+        MatrixOperation::camera_matrix(self.camera_position, self.target_position, Vector3::up())
     }
 }
 
