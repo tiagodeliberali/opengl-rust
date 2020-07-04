@@ -80,7 +80,9 @@ fn main() {
                 instance.reset_transform();
                 instance.set_scale(Vector3::new(0.5, 0.5, 0.5));
                 instance.set_parent(&parent);
-                instance.set_translation(SphereVector::new(1.5, -20.0, step as f32).to_cartesian());
+                instance.set_translation(
+                    SphereVector::new(1.5, -20.0, (step * 5) as f32).to_cartesian(),
+                );
             });
 
         instances
