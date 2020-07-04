@@ -12,12 +12,11 @@ use coordinates::SphereVector;
 use glium::glutin;
 use glium::glutin::event_loop::{ControlFlow, EventLoop};
 use math::Vector3;
-use models::{Camera, Instance, World};
+use models::{Camera, Instance, KeyManager, World};
 use primitives::Primitive;
-use std::collections::HashSet;
 
 fn main() {
-    let mut pressed_keys = HashSet::new();
+    let mut key_manager = KeyManager::new();
     let event_loop = EventLoop::new();
     let mut camera = Camera::new(Vector3::new(-2.0, 3.0, -8.0), Vector3::new(0.0, 0.0, -5.0));
     let mut world = World::new(&event_loop, camera.clone());
@@ -62,7 +61,7 @@ fn main() {
     let mut next_frame_time = std::time::Instant::now();
 
     event_loop.run(move |event, _, control_flow| {
-        for key in pressed_keys.iter() {
+        for key in key_manager.iter() {
             let movement = match key {
                 glium::glutin::event::VirtualKeyCode::W => Vector3::new(0.00001, 0.0, 0.0),
                 glium::glutin::event::VirtualKeyCode::S => Vector3::new(-0.00001, 0.0, 0.0),
@@ -90,49 +89,8 @@ fn main() {
                     world.change_perspective_ratio(ratio);
                     return;
                 }
-                glutin::event::WindowEvent::KeyboardInput {
-                    input:
-                        glium::glutin::event::KeyboardInput {
-                            virtual_keycode: Some(glium::glutin::event::VirtualKeyCode::W),
-                            state: glium::glutin::event::ElementState::Pressed,
-                            ..
-                        },
-                    ..
-                } => {
-                    pressed_keys.insert(glium::glutin::event::VirtualKeyCode::W);
-                }
-                glutin::event::WindowEvent::KeyboardInput {
-                    input:
-                        glium::glutin::event::KeyboardInput {
-                            virtual_keycode: Some(glium::glutin::event::VirtualKeyCode::W),
-                            state: glium::glutin::event::ElementState::Released,
-                            ..
-                        },
-                    ..
-                } => {
-                    pressed_keys.remove(&glium::glutin::event::VirtualKeyCode::W);
-                }
-                glutin::event::WindowEvent::KeyboardInput {
-                    input:
-                        glium::glutin::event::KeyboardInput {
-                            virtual_keycode: Some(glium::glutin::event::VirtualKeyCode::S),
-                            state: glium::glutin::event::ElementState::Pressed,
-                            ..
-                        },
-                    ..
-                } => {
-                    pressed_keys.insert(glium::glutin::event::VirtualKeyCode::S);
-                }
-                glutin::event::WindowEvent::KeyboardInput {
-                    input:
-                        glium::glutin::event::KeyboardInput {
-                            virtual_keycode: Some(glium::glutin::event::VirtualKeyCode::S),
-                            state: glium::glutin::event::ElementState::Released,
-                            ..
-                        },
-                    ..
-                } => {
-                    pressed_keys.remove(&glium::glutin::event::VirtualKeyCode::S);
+                glutin::event::WindowEvent::KeyboardInput { input, .. } => {
+                    key_manager.update(&input)
                 }
                 _ => (),
             },

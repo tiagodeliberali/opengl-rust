@@ -6,9 +6,14 @@ use crate::shaders::{FragmentShader, VertexShader};
 use glium::backend::glutin::Display;
 use glium::{DrawParameters, Program};
 use glium::{IndexBuffer, VertexBuffer};
+use std::collections::hash_set::Iter;
+use std::collections::HashSet;
 use std::sync::Arc;
 
-use glium::glutin::event_loop::EventLoop;
+use glium::glutin::{
+    event::{ElementState, KeyboardInput, VirtualKeyCode},
+    event_loop::EventLoop,
+};
 use glium::{glutin, Surface};
 
 const Z_NEAR: f32 = 1.0;
@@ -180,5 +185,30 @@ impl Instance {
 
     pub fn set_rotate_z(&mut self, angle: f32) {
         self.operations = Quaternion::rotate_z(angle) * self.operations;
+    }
+}
+
+pub struct KeyManager {
+    pressed_keys: HashSet<VirtualKeyCode>,
+}
+
+impl KeyManager {
+    pub fn new() -> Self {
+        KeyManager {
+            pressed_keys: HashSet::new(),
+        }
+    }
+
+    pub fn update(&mut self, input: &KeyboardInput) {
+        if let Some(code) = input.virtual_keycode {
+            match input.state {
+                ElementState::Pressed => self.pressed_keys.insert(code),
+                ElementState::Released => self.pressed_keys.remove(&code),
+            };
+        }
+    }
+
+    pub fn iter(&self) -> Iter<VirtualKeyCode> {
+        self.pressed_keys.iter()
     }
 }
