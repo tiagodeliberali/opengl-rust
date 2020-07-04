@@ -24,10 +24,10 @@ fn main() {
     // ITEMS TO DRAW
     let cube_prefab = Primitive::cube(world.display.clone());
 
-    let mut cube_instance1 = Instance::new(cube_prefab.clone());
-    cube_instance1.set_scale(Vector3::new(1.5, 1.5, 1.5));
-    cube_instance1.set_translation(Vector3::new(0.0, 0.0, -5.0));
-    world.add_instance(String::from("instance1"), cube_instance1);
+    let mut cube_instance = Instance::new(cube_prefab.clone());
+    cube_instance.set_scale(Vector3::new(1.5, 1.5, 1.5));
+    cube_instance.set_translation(Vector3::new(0.0, 0.0, -5.0));
+    world.add_instance(String::from("instance1"), cube_instance);
 
     world.add_instance(
         String::from("instance2"),
@@ -39,6 +39,7 @@ fn main() {
         Instance::new(cube_prefab.clone()),
     );
 
+    // DRAW STEP
     let mut step = 0;
 
     world.set_update(move |key_manager, instances| {
@@ -92,21 +93,10 @@ fn main() {
             });
     });
 
+    // WIN EVENT LOOP
     let mut next_frame_time = std::time::Instant::now();
 
     event_loop.run(move |event, _, control_flow| {
-        // for key in key_manager.iter() {
-        //     let movement = match key {
-        //         glium::glutin::event::VirtualKeyCode::W => Vector3::new(0.00001, 0.0, 0.0),
-        //         glium::glutin::event::VirtualKeyCode::S => Vector3::new(-0.00001, 0.0, 0.0),
-        //         _ => Vector3::new(0.0, 0.0, 0.0),
-        //     };
-
-        //     camera.camera_position = camera.camera_position + movement;
-        //     camera.target_position = camera.target_position + movement;
-        //     world.update_camera(camera.clone());
-        // }
-
         if next_frame_time.elapsed() > std::time::Duration::from_nanos(16_666_667) {
             world.draw_update();
             next_frame_time = std::time::Instant::now();
