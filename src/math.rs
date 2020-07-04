@@ -103,10 +103,6 @@ impl Vector3 {
         Vector3 { x, y, z }
     }
 
-    pub fn up() -> Self {
-        Vector3::new(0.0, 1.0, 0.0)
-    }
-
     pub fn normalized(self) -> Self {
         let norm: f32 = (self.x * self.x + self.y * self.y + self.z * self.z).sqrt();
         let mut result = self.clone();

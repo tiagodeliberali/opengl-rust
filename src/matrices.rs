@@ -38,6 +38,8 @@ impl MatrixOperation {
         ])
     }
 
+    /// reference: https://paroj.github.io/gltut/Positioning/Tutorial%2007.html
+    #[allow(dead_code)]
     pub fn camera_matrix(camera_position: Vector3, target: Vector3, up_vector: Vector3) -> Matrix4 {
         let look_direction = (target - camera_position).normalized();
         let up_vector = up_vector.normalized();

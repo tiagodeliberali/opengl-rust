@@ -28,7 +28,7 @@ pub struct World<'a> {
     camera: Camera,
     key_manager: KeyManager,
     instances: HashMap<String, Instance>,
-    update: Option<Box<dyn FnMut(&KeyManager, &mut HashMap<String, Instance>)>>,
+    update: Option<Box<dyn FnMut(&KeyManager, &mut HashMap<String, Instance>, &mut Camera)>>,
 }
 
 impl<'a> World<'static> {
@@ -84,21 +84,17 @@ impl<'a> World<'static> {
         self.key_manager.update(input);
     }
 
-    pub fn update_camera(&mut self, camera: Camera) {
-        self.camera = camera;
-    }
-
     pub fn draw_update(&mut self) {
         let mut target = self.display.draw();
         target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
 
         if let Some(update_action) = &mut self.update {
-            update_action(&self.key_manager, &mut self.instances);
+            update_action(&self.key_manager, &mut self.instances, &mut self.camera);
 
             for instance in self.instances.values() {
                 let uniforms = uniform! {
                     modelToWorldMatrix: instance.operations,
-                    worldToCameraMatrix: self.camera.build_camera_matrix(),
+                    worldToCameraMatrix: self.camera.camera_matrix_from_target(),
                     cameraToClipMatrix: self.perspective_matrix
                 };
 
@@ -119,7 +115,7 @@ impl<'a> World<'static> {
 
     pub fn set_update<F>(&mut self, update_fn: F)
     where
-        F: 'static + FnMut(&KeyManager, &mut HashMap<String, Instance>),
+        F: 'static + FnMut(&KeyManager, &mut HashMap<String, Instance>, &mut Camera),
     {
         self.update.replace(Box::from(update_fn));
     }
@@ -148,22 +144,70 @@ impl Prefab {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
 pub struct Camera {
-    pub camera_position: Vector3,
-    pub target_position: Vector3,
+    pub operations: Matrix4,
 }
 
 impl Camera {
-    pub fn new(camera_position: Vector3, target_position: Vector3) -> Camera {
+    pub fn new() -> Camera {
         Camera {
-            camera_position,
-            target_position,
+            operations: Matrix4::identity(),
         }
     }
 
-    pub fn build_camera_matrix(&self) -> Matrix4 {
-        MatrixOperation::camera_matrix(self.camera_position, self.target_position, Vector3::up())
+    pub fn set_parent(&mut self, instance: &Instance) {
+        self.operations = instance.operations.clone();
+    }
+
+    /// original version: MatrixOperation::camera_matrix(self.camera_position, self.target_position, Vector3::up())
+    pub fn camera_matrix_from_target(&self) -> Matrix4 {
+        let look_direction = self.operations.get_forward_vector().normalized();
+        let up_vector = self.operations.get_up_vector().normalized();
+
+        let right_direction = look_direction.cross(up_vector);
+        let perpedicular_up_direction = right_direction.cross(look_direction);
+
+        let rotation_matrix = Matrix4::from([
+            right_direction.x,
+            right_direction.y,
+            right_direction.z,
+            0.0,
+            perpedicular_up_direction.x,
+            perpedicular_up_direction.y,
+            perpedicular_up_direction.z,
+            0.0,
+            -look_direction.x,
+            -look_direction.y,
+            -look_direction.z,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+        ]);
+
+        let camera_position = self.operations.get_position();
+
+        let translation_matrix = Matrix4::from([
+            1.0,
+            0.0,
+            0.0,
+            -camera_position.x,
+            0.0,
+            1.0,
+            0.0,
+            -camera_position.y,
+            0.0,
+            0.0,
+            1.0,
+            -camera_position.z,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+        ]);
+
+        return rotation_matrix * translation_matrix;
     }
 }
 

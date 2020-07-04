@@ -18,8 +18,8 @@ use primitives::Primitive;
 
 fn main() {
     let event_loop = EventLoop::new();
-    let camera = Camera::new(Vector3::new(-2.0, 3.0, -8.0), Vector3::new(0.0, 0.0, -5.0));
-    let mut world = World::new(&event_loop, camera.clone());
+    let camera = Camera::new();
+    let mut world = World::new(&event_loop, camera);
 
     // ITEMS TO DRAW
     let cube_prefab = Primitive::cube(world.display.clone());
@@ -42,7 +42,7 @@ fn main() {
     // DRAW STEP
     let mut step = 0;
 
-    world.set_update(move |key_manager, instances| {
+    world.set_update(move |key_manager, instances, camera| {
         let mut front_movement = 0.0;
         let mut side_movement = 0.0;
         let mut up_movement = 0.0;
@@ -66,13 +66,15 @@ fn main() {
         instances
             .entry(String::from("instance1"))
             .and_modify(|instance| {
-                instance.set_rotate_z(1.0);
+                // instance.set_rotate_z(1.0);
                 instance.add_front_translation(front_movement);
                 instance.add_side_translation(side_movement);
                 instance.add_up_translation(up_movement);
             });
 
         let parent = instances.get("instance1").unwrap().clone();
+
+        camera.set_parent(&parent);
 
         instances
             .entry(String::from("instance2"))
