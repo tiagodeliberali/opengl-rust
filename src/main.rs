@@ -17,6 +17,7 @@ use models::{Camera, Instance, World};
 use primitives::Primitive;
 
 const MOUSE_SENSIBILITY: f32 = 0.5;
+const KEY_MOVEMENT: f32 = 0.25;
 
 fn main() {
     let event_loop = EventLoop::new();
@@ -52,6 +53,7 @@ fn main() {
     );
 
     let mut floor = Instance::new(cube_prefab.clone());
+    floor.set_rotate_x(180.0);
     floor.set_scale(Vector3::new(80.0, 0.1, 80.0));
     floor.set_translation(Vector3::new(30.0, -0.05, 30.0));
     world.add_instance(String::from("floor"), floor);
@@ -69,12 +71,12 @@ fn main() {
 
         for key in device_manager.iter_keys() {
             match key {
-                VirtualKeyCode::W => front_movement = 0.1,
-                VirtualKeyCode::S => front_movement = -0.1,
-                VirtualKeyCode::A => side_movement = 0.1,
-                VirtualKeyCode::D => side_movement = -0.1,
-                VirtualKeyCode::Q => up_movement = 0.1,
-                VirtualKeyCode::E => up_movement = -0.1,
+                VirtualKeyCode::W => front_movement = KEY_MOVEMENT,
+                VirtualKeyCode::S => front_movement = -KEY_MOVEMENT,
+                VirtualKeyCode::A => side_movement = KEY_MOVEMENT,
+                VirtualKeyCode::D => side_movement = -KEY_MOVEMENT,
+                VirtualKeyCode::Q => up_movement = KEY_MOVEMENT,
+                VirtualKeyCode::E => up_movement = -KEY_MOVEMENT,
                 _ => (),
             };
         }
