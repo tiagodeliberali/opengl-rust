@@ -11,7 +11,7 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 use glium::glutin::{
-    event::{ElementState, KeyboardInput, VirtualKeyCode},
+    event::{ElementState, KeyboardInput, MouseScrollDelta, VirtualKeyCode},
     event_loop::EventLoop,
 };
 use glium::{glutin, Surface};
@@ -26,9 +26,9 @@ pub struct World<'a> {
     program: Program,
     perspective_matrix: Matrix4,
     camera: Camera,
-    key_manager: KeyManager,
+    device_manager: DeviceManager,
     instances: HashMap<String, Instance>,
-    update: Option<Box<dyn FnMut(&KeyManager, &mut HashMap<String, Instance>, &mut Camera)>>,
+    update: Option<Box<dyn FnMut(&DeviceManager, &mut HashMap<String, Instance>, &mut Camera)>>,
 }
 
 impl<'a> World<'static> {
@@ -62,7 +62,7 @@ impl<'a> World<'static> {
 
         let perspective_matrix = MatrixOperation::perspective(1.0, VIEW_ANGLE, Z_NEAR, Z_FAR);
 
-        let key_manager = KeyManager::new();
+        let device_manager = DeviceManager::new();
 
         World {
             display,
@@ -70,7 +70,7 @@ impl<'a> World<'static> {
             program,
             perspective_matrix,
             camera,
-            key_manager,
+            device_manager,
             instances: HashMap::new(),
             update: None,
         }
@@ -81,15 +81,21 @@ impl<'a> World<'static> {
     }
 
     pub fn update_key_manager(&mut self, input: &KeyboardInput) {
-        self.key_manager.update(input);
+        self.device_manager.update_keys(input);
     }
+
+    pub fn update_mouse_motion(&mut self, delta: (f64, f64)) {
+        self.device_manager.update_mouse_motion(delta.0, delta.1);
+    }
+
+    pub fn update_mouse_wheel(&mut self, delta: MouseScrollDelta) {}
 
     pub fn draw_update(&mut self) {
         let mut target = self.display.draw();
         target.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
 
         if let Some(update_action) = &mut self.update {
-            update_action(&self.key_manager, &mut self.instances, &mut self.camera);
+            update_action(&self.device_manager, &mut self.instances, &mut self.camera);
 
             for instance in self.instances.values() {
                 let uniforms = uniform! {
@@ -111,11 +117,12 @@ impl<'a> World<'static> {
         }
 
         target.finish().unwrap();
+        self.device_manager.reset_mouse();
     }
 
     pub fn set_update<F>(&mut self, update_fn: F)
     where
-        F: 'static + FnMut(&KeyManager, &mut HashMap<String, Instance>, &mut Camera),
+        F: 'static + FnMut(&DeviceManager, &mut HashMap<String, Instance>, &mut Camera),
     {
         self.update.replace(Box::from(update_fn));
     }
@@ -160,6 +167,7 @@ impl Camera {
     }
 
     /// original version: MatrixOperation::camera_matrix(self.camera_position, self.target_position, Vector3::up())
+    #[rustfmt::skip]
     pub fn camera_matrix_from_target(&self) -> Matrix4 {
         let look_direction = self.operations.get_forward_vector().normalized();
         let up_vector = self.operations.get_up_vector().normalized();
@@ -168,43 +176,19 @@ impl Camera {
         let perpedicular_up_direction = right_direction.cross(look_direction);
 
         let rotation_matrix = Matrix4::from([
-            right_direction.x,
-            right_direction.y,
-            right_direction.z,
-            0.0,
-            perpedicular_up_direction.x,
-            perpedicular_up_direction.y,
-            perpedicular_up_direction.z,
-            0.0,
-            -look_direction.x,
-            -look_direction.y,
-            -look_direction.z,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0,
+            right_direction.x,              right_direction.y,              right_direction.z,              0.0,
+            perpedicular_up_direction.x,    perpedicular_up_direction.y,    perpedicular_up_direction.z,    0.0,
+            -look_direction.x,              -look_direction.y,              -look_direction.z,              0.0,
+            0.0,                            0.0,                            0.0,                            1.0,
         ]);
 
         let camera_position = self.operations.get_position();
 
         let translation_matrix = Matrix4::from([
-            1.0,
-            0.0,
-            0.0,
-            -camera_position.x,
-            0.0,
-            1.0,
-            0.0,
-            -camera_position.y,
-            0.0,
-            0.0,
-            1.0,
-            -camera_position.z,
-            0.0,
-            0.0,
-            0.0,
-            1.0,
+            1.0,    0.0,    0.0,    -camera_position.x,
+            0.0,    1.0,    0.0,    -camera_position.y,
+            0.0,    0.0,    1.0,    -camera_position.z,
+            0.0,    0.0,    0.0,    1.0,
         ]);
 
         return rotation_matrix * translation_matrix;
@@ -280,18 +264,24 @@ impl Instance {
     }
 }
 
-pub struct KeyManager {
+pub struct DeviceManager {
     pressed_keys: HashSet<VirtualKeyCode>,
+    mouse_delta_y: Option<f32>,
+    mouse_delta_x: Option<f32>,
 }
 
-impl KeyManager {
+const MIN_CHANGE: f64 = 0.001;
+
+impl DeviceManager {
     pub fn new() -> Self {
-        KeyManager {
+        DeviceManager {
             pressed_keys: HashSet::new(),
+            mouse_delta_y: None,
+            mouse_delta_x: None,
         }
     }
 
-    pub fn update(&mut self, input: &KeyboardInput) {
+    pub fn update_keys(&mut self, input: &KeyboardInput) {
         if let Some(code) = input.virtual_keycode {
             match input.state {
                 ElementState::Pressed => self.pressed_keys.insert(code),
@@ -300,7 +290,42 @@ impl KeyManager {
         }
     }
 
-    pub fn iter(&self) -> Iter<VirtualKeyCode> {
+    pub fn update_mouse_motion(&mut self, x: f64, y: f64) {
+        self.mouse_delta_x = if x.abs() > MIN_CHANGE {
+            Some(x as f32)
+        } else {
+            None
+        };
+
+        self.mouse_delta_y = if y.abs() > MIN_CHANGE {
+            Some(y as f32)
+        } else {
+            None
+        };
+    }
+
+    pub fn iter_keys(&self) -> Iter<VirtualKeyCode> {
         self.pressed_keys.iter()
+    }
+
+    pub fn get_last_mouse_movement_x(&self) -> f32 {
+        if let Some(value) = self.mouse_delta_x {
+            value
+        } else {
+            0.0
+        }
+    }
+
+    pub fn get_last_mouse_movement_y(&self) -> f32 {
+        if let Some(value) = self.mouse_delta_y {
+            value
+        } else {
+            0.0
+        }
+    }
+
+    pub fn reset_mouse(&mut self) {
+        self.mouse_delta_x = None;
+        self.mouse_delta_y = None;
     }
 }
