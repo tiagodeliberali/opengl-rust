@@ -12,7 +12,7 @@ use coordinates::SphereVector;
 use glium::glutin;
 use glium::glutin::event::VirtualKeyCode;
 use glium::glutin::event_loop::{ControlFlow, EventLoop};
-use math::{Vector3, clamp};
+use math::{clamp, Vector3};
 use models::{Camera, Instance, World};
 use primitives::Primitive;
 
@@ -33,7 +33,11 @@ fn main() {
 
     for i in 0..100 {
         let mut cube_instance = Instance::new(cube_prefab.clone());
-        cube_instance.set_translation(Vector3::new((i % 10) as f32 * 6.0, 0.5, (i / 10) as f32 * 6.0));
+        cube_instance.set_translation(Vector3::new(
+            (i % 10) as f32 * 6.0,
+            0.5,
+            (i / 10) as f32 * 6.0,
+        ));
         world.add_instance(String::from(format!("cube_{}", i)), cube_instance);
     }
 
@@ -60,8 +64,8 @@ fn main() {
         let mut front_movement = 0.0;
         let mut side_movement = 0.0;
         let mut up_movement = 0.0;
-        let rotate_horizontal = - device_manager.get_last_mouse_movement_x() * MOUSE_SENSIBILITY;
-        let rotate_vertical = device_manager.get_last_mouse_movement_y() * MOUSE_SENSIBILITY;;
+        let rotate_horizontal = -device_manager.get_last_mouse_movement_x() * MOUSE_SENSIBILITY;
+        let rotate_vertical = device_manager.get_last_mouse_movement_y() * MOUSE_SENSIBILITY;
 
         for key in device_manager.iter_keys() {
             match key {
@@ -92,7 +96,7 @@ fn main() {
 
         camera_vertical_rotation += rotate_vertical;
         camera_vertical_rotation = clamp(camera_vertical_rotation, -20.0, 40.0);
-        
+
         let mut camera_instance = parent.clone();
         camera_instance.set_rotate_x(camera_vertical_rotation);
         camera_instance.add_front_translation(-10.0);
