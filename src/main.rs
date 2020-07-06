@@ -34,6 +34,7 @@ fn main() {
 
     for i in 0..100 {
         let mut cube_instance = Instance::new(cube_prefab.clone());
+        cube_instance.set_rotate_y(i as f32 * 37.0);
         cube_instance.set_translation(Vector3::new(
             (i % 10) as f32 * 6.0,
             0.5,
